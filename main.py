@@ -22,6 +22,10 @@ STORAGE_ZONE_REGION = None  # Região da zona, opcional
 # Inicializar o Storage do BunnyCDN
 bunny_storage = Storage(STORAGE_API_KEY, STORAGE_ZONE_NAME, STORAGE_ZONE_REGION)
 
+print(f"API Key: {os.environ.get('BUNNY_API_KEY')}")
+print(f"Storage Zone Name: {os.environ.get('STORAGE_ZONE_NAME')}")
+
+
 # Modelo de dados recebidos pela API
 class StoryInput(BaseModel):
     id: str
