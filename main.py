@@ -3,10 +3,10 @@ from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 from pydub import AudioSegment
 from io import BytesIO
+import uvicorn
 import os
 import openai
-from BunnyCDN.Storage import Storage 
-from BunnyCDN.CDN import CDN
+from BunnyCDN.Storage import Storage  # Importação correta do Storage
 
 # Inicializando o FastAPI
 app = FastAPI()
@@ -15,17 +15,12 @@ app = FastAPI()
 openai.api_key = os.environ.get("openai_apikey")  # Substitua pela sua chave da OpenAI
 
 # Configuração do Bunny.net
-#BUNNY_API_KEY = "3c363c63-888a-4e06-b733-7ebf6cc368676d4ca3cf-d056-4d43-ab95-5b191d889b90"
 BUNNY_API_KEY = os.environ.get("bunny_apikey")  # Sua API key do Bunny.net
-STORAGE_ZONE = "contahistoria"
-STORAGE_ZONE_ID = 849285
-BUNNY_STORAGE_PATH = f"/{STORAGE_ZONE}/"
+#STORAGE_API_KEY = "3c363c63-888a-4e06-b733-7ebf6cc368676d4ca3cf-d056-4d43-ab95-5b191d889b90"
+STORAGE_ZONE_NAME = "contahistoria"
 
-# Inicializando BunnyCDNStorage
-bunny_storage = BunnyCDNStorage(
-    api_key=BUNNY_API_KEY,
-    storage_zone_name=STORAGE_ZONE
-)
+# Inicializando a conexão com o BunnyCDN Storage
+bunny_storage = Storage(STORAGE_API_KEY, STORAGE_ZONE_NAME)
 
 # Modelo de dados recebidos pela API
 class StoryInput(BaseModel):
@@ -78,11 +73,10 @@ async def process_story(story_input: StoryInput):
         final_audio_path = f"{story_id}.mp3"
         final_audio.export(final_audio_path, format="mp3")
 
-        # Fazer upload do arquivo para Bunny.net usando a biblioteca BunnyCDN
+        # Fazer upload do arquivo para Bunny.net
         try:
-            with open(final_audio_path, "rb") as file:
-                bunny_storage.upload_file(f"{story_id}.mp3", file)
-
+            upload_path = f"{story_id}.mp3"
+            bunny_storage.PutFile(file_name=upload_path, local_upload_file_path=final_audio_path)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro ao salvar no Bunny.net: {str(e)}")
 
@@ -93,3 +87,7 @@ async def process_story(story_input: StoryInput):
         return JSONResponse(status_code=http_err.status_code, content={"error": http_err.detail})
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"Erro desconhecido: {str(e)}"})
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))  # Render usa a variável PORT
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
