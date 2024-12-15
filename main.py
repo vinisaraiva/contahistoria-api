@@ -5,7 +5,8 @@ from pydub import AudioSegment
 from io import BytesIO
 import os
 import openai
-from bunnycdn.storage import BunnyCDNStorage
+from BunnyCDN.Storage import Storage 
+from BunnyCDN.CDN import CDN
 
 # Inicializando o FastAPI
 app = FastAPI()
