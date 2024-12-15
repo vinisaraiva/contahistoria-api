@@ -12,15 +12,15 @@ from BunnyCDN.Storage import Storage  # Importação correta do Storage
 app = FastAPI()
 
 # Configuração da API OpenAI
-openai.api_key = os.environ.get("openai_apikey")  # Substitua pela sua chave da OpenAI
+openai.api_key = os.environ.get("OPENAI_API_KEY")  # Substitua pela sua chave da OpenAI
 
-# Configuração do Bunny.net
-STORAGE_API_KEY = os.environ.get("bunny_apikey")  # Sua API key do Bunny.net
-#STORAGE_API_KEY = "3c363c63-888a-4e06-b733-7ebf6cc368676d4ca3cf-d056-4d43-ab95-5b191d889b90"
-STORAGE_ZONE_NAME = "contahistoria"
+# Configuração da API BunnyCDN
+STORAGE_API_KEY = os.environ.get("BUNNY_API_KEY")  # Chave da API armazenada no Render
+STORAGE_ZONE_NAME = "contahistoria"  # Nome da zona de armazenamento
+STORAGE_ZONE_REGION = None  # Região da zona, opcional
 
-# Inicializando a conexão com o BunnyCDN Storage
-bunny_storage = Storage(STORAGE_API_KEY, STORAGE_ZONE_NAME)
+# Inicializar o Storage do BunnyCDN
+bunny_storage = Storage(STORAGE_API_KEY, STORAGE_ZONE_NAME, STORAGE_ZONE_REGION)
 
 # Modelo de dados recebidos pela API
 class StoryInput(BaseModel):
@@ -79,6 +79,18 @@ async def process_story(story_input: StoryInput):
             bunny_storage.PutFile(file_name=upload_path, local_upload_file_path=final_audio_path)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro ao salvar no Bunny.net: {str(e)}")
+
+        try:
+            # Nome do arquivo dentro da zona de armazenamento
+            upload_path = f"{story_id}.mp3"
+            # Chamar o método PutFile com o caminho correto
+            bunny_storage.PutFile(
+                file_name=upload_path,  # Caminho do arquivo dentro do Bunny.net
+                local_upload_file_path=final_audio_path  # Caminho do arquivo local
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro ao salvar no Bunny.net: {str(e)}")
+
 
         # Retornar sucesso
         return JSONResponse(status_code=200, content={"message": "Áudio gerado e salvo com sucesso"})
