@@ -15,7 +15,7 @@ app = FastAPI()
 openai.api_key = os.environ.get("openai_apikey")  # Substitua pela sua chave da OpenAI
 
 # Configuração do Bunny.net
-BUNNY_API_KEY = os.environ.get("bunny_apikey")  # Sua API key do Bunny.net
+STORAGE_API_KEY = os.environ.get("bunny_apikey")  # Sua API key do Bunny.net
 #STORAGE_API_KEY = "3c363c63-888a-4e06-b733-7ebf6cc368676d4ca3cf-d056-4d43-ab95-5b191d889b90"
 STORAGE_ZONE_NAME = "contahistoria"
 
