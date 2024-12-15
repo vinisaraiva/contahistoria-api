@@ -89,5 +89,5 @@ async def process_story(story_input: StoryInput):
         return JSONResponse(status_code=500, content={"error": f"Erro desconhecido: {str(e)}"})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Lê a variável PORT do ambiente ou usa 8000 como padrão
+    port = int(os.environ.get("PORT", 8000))  # Lê a variável PORT do ambiente ou usa 8000 como padrão
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
