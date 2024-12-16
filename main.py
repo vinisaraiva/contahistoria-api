@@ -11,8 +11,8 @@ from openai import OpenAI
 import requests
 import tempfile
 from pydub import AudioSegment
+from gtts import gTTS
 from BunnyCDN.Storage import Storage  # Importação correta do Storage
-
 
 # Configuração do FastAPI
 app = FastAPI()
@@ -24,12 +24,6 @@ STORAGE_URL = f"https://storage.bunnycdn.com/{STORAGE_ZONE_NAME}"
 
 if not STORAGE_API_KEY or not STORAGE_ZONE_NAME:
     raise ValueError("Configure as variáveis de ambiente BUNNY_API_KEY e STORAGE_ZONE_NAME.")
-
-# Inicializar o pyttsx3
-tts_engine = pyttsx3.init()
-tts_engine.setProperty("rate", 150)  # Ajusta a velocidade da fala
-tts_engine.setProperty("volume", 1.0)  # Ajusta o volume
-
 
 # Modelo para receber os dados no webhook
 class StoryInput(BaseModel):
@@ -52,9 +46,9 @@ async def process_story(data: StoryInput):
             # Criar arquivo temporário para o áudio
             temp_audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
             
-            # Usar pyttsx3 para gerar o áudio
-            tts_engine.save_to_file(chunk, temp_audio_path)
-            tts_engine.runAndWait()
+            # Usar gTTS para gerar o áudio
+            tts = gTTS(text=chunk, lang="pt")
+            tts.save(temp_audio_path)
             
             audio_files.append(temp_audio_path)
 
@@ -97,5 +91,3 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))  # Porta definida no ambiente ou 8000 como padrão
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
-
-
