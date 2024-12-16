@@ -5,11 +5,14 @@ from pydub import AudioSegment
 from io import BytesIO
 import uvicorn
 import os
+import pyttsx3
+import shutil
 from openai import OpenAI
 import requests
 import tempfile
 from pydub import AudioSegment
 from BunnyCDN.Storage import Storage  # Importação correta do Storage
+
 
 # Configuração do FastAPI
 app = FastAPI()
@@ -22,13 +25,11 @@ STORAGE_URL = f"https://storage.bunnycdn.com/{STORAGE_ZONE_NAME}"
 if not STORAGE_API_KEY or not STORAGE_ZONE_NAME:
     raise ValueError("Configure as variáveis de ambiente BUNNY_API_KEY e STORAGE_ZONE_NAME.")
 
-# Configuração da API OpenAI
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("A variável de ambiente OPENAI_API_KEY não está configurada.")
+# Inicializar o pyttsx3
+tts_engine = pyttsx3.init()
+tts_engine.setProperty("rate", 150)  # Ajusta a velocidade da fala
+tts_engine.setProperty("volume", 1.0)  # Ajusta o volume
 
-# Inicializar cliente OpenAI
-openai = OpenAI(api_key=OPENAI_API_KEY)
 
 # Modelo para receber os dados no webhook
 class StoryInput(BaseModel):
@@ -48,16 +49,14 @@ async def process_story(data: StoryInput):
         # Criar arquivos de áudio para cada trecho
         audio_files = []
         for idx, chunk in enumerate(text_chunks):
-            response = openai.audio.transcriptions.create(
-                model="text-to-speech-1",  # Modelo da OpenAI para TTS
-                text=chunk,
-                output_format="mp3"
-            )
+            # Criar arquivo temporário para o áudio
+            temp_audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
             
-            temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-            temp_audio.write(response)
-            temp_audio.close()
-            audio_files.append(temp_audio.name)
+            # Usar pyttsx3 para gerar o áudio
+            tts_engine.save_to_file(chunk, temp_audio_path)
+            tts_engine.runAndWait()
+            
+            audio_files.append(temp_audio_path)
 
         # Combinar todos os arquivos de áudio em um único arquivo MP3
         final_audio_path = f"{data.id}.mp3"
@@ -98,4 +97,5 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))  # Porta definida no ambiente ou 8000 como padrão
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+
 
