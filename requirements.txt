@@ -5,4 +5,4 @@ pydub
 openai
 bunnycdnpython
 requests
-gtts
+edge-tts
