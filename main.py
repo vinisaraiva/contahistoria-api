@@ -41,7 +41,7 @@ async def generate_audio_edgetts(text_chunks, output_path):
         temp_audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
 
         # Usar EdgeTTS para gerar o áudio
-        communicate = edge_tts.Communicate(chunk, "af-ZA-AdriNeural")  # Escolha da voz
+        communicate = edge_tts.Communicate(chunk, "en-US-AriaNeural")  # Escolha da voz
         await communicate.save(temp_audio_path)
 
         # Carregar o áudio gerado
