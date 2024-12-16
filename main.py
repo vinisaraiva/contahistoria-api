@@ -5,7 +5,7 @@ from pydub import AudioSegment
 from io import BytesIO
 import uvicorn
 import os
-import openai
+from openai import OpenAI
 import requests
 import tempfile
 from pydub import AudioSegment
