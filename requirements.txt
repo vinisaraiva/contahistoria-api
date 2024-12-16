@@ -5,3 +5,5 @@ pydub
 openai
 bunnycdnpython
 requests
+pyttsx3
+shutil
