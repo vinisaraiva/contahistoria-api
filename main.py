@@ -6,11 +6,11 @@ from io import BytesIO
 import uvicorn
 import os
 import shutil
-from openai import OpenAI
+import asyncio
+import edge_tts
 import requests
 import tempfile
 from pydub import AudioSegment
-from gtts import gTTS
 from BunnyCDN.Storage import Storage  # Importação correta do Storage
 
 # Configuração do FastAPI
@@ -30,6 +30,31 @@ class StoryInput(BaseModel):
     text: str  # Texto da história
 
 
+async def generate_audio_edgetts(text_chunks, output_path):
+    """
+    Gera áudio a partir de texto usando EdgeTTS.
+    Combina múltiplos trechos em um único arquivo de áudio.
+    """
+    combined_audio = AudioSegment.empty()
+    
+    for idx, chunk in enumerate(text_chunks):
+        temp_audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
+
+        # Usar EdgeTTS para gerar o áudio
+        communicate = edge_tts.Communicate(chunk, "af-ZA-AdriNeural")  # Escolha da voz
+        await communicate.save(temp_audio_path)
+
+        # Carregar o áudio gerado
+        audio_segment = AudioSegment.from_file(temp_audio_path, format="mp3")
+        combined_audio += audio_segment
+
+        # Remover o arquivo temporário
+        os.unlink(temp_audio_path)
+
+    # Exportar o áudio combinado
+    combined_audio.export(output_path, format="mp3")
+
+
 @app.post("/webhook")
 async def process_story(data: StoryInput):
     """
@@ -39,35 +64,18 @@ async def process_story(data: StoryInput):
         # Dividir o texto em trechos de até 3.000 caracteres
         text_chunks = [data.text[i:i+3000] for i in range(0, len(data.text), 3000)]
 
-        # Criar arquivos de áudio para cada trecho
-        audio_files = []
-        for idx, chunk in enumerate(text_chunks):
-            # Criar arquivo temporário para o áudio
-            temp_audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
-            
-            # Usar gTTS para gerar o áudio
-            tts = gTTS(text=chunk, lang="pt")
-            tts.save(temp_audio_path)
-            
-            audio_files.append(temp_audio_path)
-
-        # Combinar todos os arquivos de áudio em um único arquivo MP3
+        # Caminho do arquivo final
         final_audio_path = f"{data.id}.mp3"
-        combined_audio = AudioSegment.empty()
-        for audio_file in audio_files:
-            audio_segment = AudioSegment.from_file(audio_file, format="mp3")
-            combined_audio += audio_segment
-            os.unlink(audio_file)  # Remover arquivos temporários
 
-        combined_audio.export(final_audio_path, format="mp3")
+        # Gerar áudio com EdgeTTS
+        await generate_audio_edgetts(text_chunks, final_audio_path)
 
-        # Upload do arquivo final para Bunny.net
+        # Upload para Bunny.net
         upload_url = f"{STORAGE_URL}/{data.id}.mp3"
         with open(final_audio_path, "rb") as audio_file:
             headers = {"AccessKey": STORAGE_API_KEY}
             response = requests.put(upload_url, headers=headers, data=audio_file)
 
-        # Verificar se o upload foi bem-sucedido
         if response.status_code == 201:
             # Remover o arquivo local após o upload
             os.unlink(final_audio_path)
