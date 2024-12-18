@@ -18,8 +18,8 @@ app = FastAPI()
 
 # Configuração da Bunny.net
 STORAGE_API_KEY = os.environ.get("BUNNY_API_KEY")  # Chave de API do Bunny.net
-STORAGE_ZONE_NAME = "contahistoria"  # Nome da zona de armazenamento
-STORAGE_URL = f"https://storage.bunnycdn.com/{STORAGE_ZONE_NAME}"  # URL de upload
+STORAGE_ZONE_NAME = "storyme"  # Nome da zona de armazenamento
+STORAGE_URL = f"https://br.storage.bunnycdn.com/{STORAGE_ZONE_NAME}"  # URL de upload
 
 # Modelo de entrada
 class StoryInput(BaseModel):
