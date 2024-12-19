@@ -36,7 +36,7 @@ VOICE_OPTIONS = {
     },
     "english": {
         "male": "en-US-GuyNeural",
-        "female": "en-US-AriaNeural"
+        "female": "en-US-MichelleNeural"
     }
 }
 
